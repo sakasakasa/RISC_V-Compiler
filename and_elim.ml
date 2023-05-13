@@ -1,0 +1,53 @@
+open Syntax
+
+let rec g (pos,ebody) = match ebody with (*if ifとなっているのをandに変換　*)
+| Not(e) -> (pos,Not(g e))
+| And(e1,e2) -> 
+(pos,If(g e1,(pos,If(g e2,(pos,Bool(true)),(pos,Bool(false)))),(pos,Bool(false))))
+| Or(e1,e2) -> (pos,Or(g e1,g e2))
+| Xor(e1,e2) -> (pos,Xor(g e1,g e2))
+| Neg(e) -> (pos,Neg(g e))
+| Add(e1,e2) -> (pos,Add(g e1,g e2))
+| Sub(e1,e2) -> (pos,Sub(g e1,g e2))
+| Mul(e1,e2) -> (pos,Mul(g e1,g e2))
+| Div(e1,e2) -> (pos,Div(g e1,g e2))
+| Rem(e1,e2) -> (pos,Rem(g e1,g e2))
+| FNeg(e) -> (pos,FNeg(g e))
+| FAdd(e1,e2) -> (pos,FAdd(g e1,g e2))
+| FSub(e1,e2) -> (pos,FSub(g e1,g e2))
+| FMul(e1,e2) -> (pos,FMul(g e1,g e2))
+| FDiv(e1,e2) -> (pos,FDiv(g e1,g e2))
+| Eq(e1,e2) -> (pos,Eq(g e1, g e2))
+| LE(e1,e2) -> (pos,LE(g e1, g e2))
+| FEq(e1,e2) -> (pos,FEq(g e1, g e2))
+| FLT(e1,e2) -> (pos,FLT(g e1, g e2))  
+| FAbs(e) -> (pos,FAbs(g e))
+| FFloor(e) -> (pos,FFloor(g e))
+| ItoF(e) -> (pos,ItoF(g e))
+| FtoI(e) -> (pos,FtoI(g e))
+| FSqrt(e) -> (pos,FSqrt(g e))
+| Write(e) -> (pos,Write(g e))
+| AndI(e,i) -> (pos,AndI(g e,i))
+(*| If(e1,(pos2,If(e2,e3,e4)),e5) when snd(e4) = snd(e5) ->
+  Format.eprintf "redundunt if found@.";
+  g(pos,If((pos,And(e1,e2)),e3,e4))*)
+| If(e1,e2,e3) -> (pos,If(g e1,g e2,g e3))
+| Let((x,t),e1,e2) -> (pos,Let((x,t),g e1,g e2))
+| LetRec({ Syntax.name = (x, t); Syntax.args = yts; Syntax.body = e1 }, e2) ->
+(pos,LetRec({name = (x,t);args = yts; body = g e1}, g e2))
+| App(f,xs) -> (pos, App(g f, List.map g xs))
+| Tuple(xs) -> (pos, Tuple(List.map g xs))
+| LetTuple(xts, e1, e2) -> (pos, LetTuple(xts, g e1, g e2))
+| Array(e1, e2) -> (pos,Array(g e1, g e2))
+| Get(e1, e2) -> (pos, Get(g e1, g e2))
+| Put(e1, e2, e3) -> (pos, Put(g e1, g e2, g e3))
+| Unit -> (pos,Unit)
+| Bool(b) -> (pos,Bool(b))
+| Int(i) -> (pos,Int(i))
+| Float(f) -> (pos,Float(f))
+| Read -> (pos,Read)
+| FRead -> (pos,FRead)
+| Var(x) -> (pos,Var(x))
+| _  -> failwith "not expected"
+
+let f e = g e
